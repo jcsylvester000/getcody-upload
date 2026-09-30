@@ -1,26 +1,30 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { AUTH_COOKIE, sessionToken } from "@/lib/auth";
+import { AUTH_COOKIE, accessCode, sessionToken } from "@/lib/auth";
+import { logActivity } from "@/lib/server/activity";
 
 export const dynamic = "force-dynamic";
 
+/** Unlock: checks the access code and sets a browser-session cookie for the API. */
 export async function POST(req: NextRequest) {
-  const pw = process.env.APP_PASSWORD ?? "";
+  const code = accessCode();
   const { password } = ((await req.json().catch(() => ({}))) ?? {}) as { password?: string };
   const a = Buffer.from(String(password ?? ""));
-  const b = Buffer.from(pw);
-  const ok = pw.length > 0 && a.length === b.length && timingSafeEqual(a, b);
+  const b = Buffer.from(code);
+  const ok = a.length === b.length && timingSafeEqual(a, b);
   if (!ok) {
-    await new Promise((r) => setTimeout(r, 600)); // slow down guessing
-    return NextResponse.json({ message: "Wrong password." }, { status: 401 });
+    await logActivity({ action: "unlock_failed" });
+    await new Promise((r) => setTimeout(r, 700)); // slow down guessing
+    return NextResponse.json({ message: "Incorrect access code." }, { status: 401 });
   }
+  await logActivity({ action: "unlocked" });
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(AUTH_COOKIE, await sessionToken(pw), {
+  // No maxAge → session cookie (cleared when the browser closes).
+  res.cookies.set(AUTH_COOKIE, await sessionToken(code), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/",
-    maxAge: 60 * 60 * 24 * 14,
   });
   return res;
 }

@@ -131,6 +131,16 @@ export async function createFolder(name: string) {
 export const listDocuments = (folderId: string, keyword?: string) =>
   all<CodyDocument>("/documents", { folder_id: folderId, ...(keyword ? { keyword } : {}) });
 
+export async function getDocument(id: string) {
+  const r = await cody<{ data: CodyDocument }>(`/documents/${encodeURIComponent(id)}`);
+  return r.data;
+}
+
+/** Cody DELETE /documents/{id} — removes the document from its folder and the bot's knowledge. */
+export async function deleteDocument(id: string) {
+  await cody(`/documents/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
 export async function getSignedUrl(fileName: string, contentType: string) {
   // Cody docs show the payload under `data`; tolerate both shapes.
   const r = await cody<{ data?: { url: string; key: string }; url?: string; key?: string }>("/uploads/signed-url", {

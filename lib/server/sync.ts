@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { listDocuments } from "./cody";
+import { logActivity, ref } from "./activity";
 import type { Batch, BatchStatus, CodyDocument, UploadLog } from "@/lib/types";
 
 const TIMEOUT_MIN = 65; // Cody times out failed conversions after ~1 h
@@ -54,8 +55,13 @@ export async function refreshBatch(batchId: string): Promise<{ batch: Batch; log
               learned_at = ${doc.status === "synced" ? new Date().toISOString() : null},
               updated_at = now()
             where id = ${log.id}`;
+          if (doc.status !== log.status) {
+            const action = { syncing: "learning_started", synced: "document_learned", sync_failed: "learning_failed" }[doc.status];
+            await logActivity({ action, ...ref(log), detail: { cody_document_id: doc.id } });
+          }
         } else if (log.sent_at && Date.now() - new Date(log.sent_at).getTime() > TIMEOUT_MIN * 60_000) {
           await sql`update upload_logs set status = 'timeout', error = 'Cody did not create the document within 65 min', updated_at = now() where id = ${log.id}`;
+          await logActivity({ action: "learning_timeout", ...ref(log) });
         }
       } catch (e) {
         console.error("[sync]", log.id, (e as Error).message); // keep polling next time
@@ -66,6 +72,10 @@ export async function refreshBatch(batchId: string): Promise<{ batch: Batch; log
   const fresh = (await sql`select * from upload_logs where batch_id = ${batchId} order by created_at`) as UploadLog[];
   const status = batchStatus(fresh);
   const done = ["complete", "partial", "failed"].includes(status);
+  const [prev] = await sql`select status from upload_batches where id = ${batchId}`;
+  if (done && prev && prev.status !== status) {
+    await logActivity({ action: `batch_${status}`, batch_id: batchId, detail: { items: fresh.length } });
+  }
   const [batch] = (await sql`update upload_batches set status = ${status},
       completed_at = case when ${done} then coalesce(completed_at, now()) else null end
     where id = ${batchId} returning *`) as Batch[];

@@ -5,6 +5,7 @@ import "@fontsource/poppins/500.css";
 import "@fontsource/poppins/600.css";
 import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
+import { PasswordGate } from "@/components/PasswordGate";
 
 export const metadata: Metadata = {
   title: { default: "GRID · Cody Uploader", template: "%s · GRID" },
@@ -22,10 +23,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <AppHeader />
-        <main id="main" className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6">
-          {children}
-        </main>
+        <PasswordGate>
+          <AppHeader />
+          <main id="main" className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6">
+            {children}
+          </main>
+        </PasswordGate>
       </body>
     </html>
   );

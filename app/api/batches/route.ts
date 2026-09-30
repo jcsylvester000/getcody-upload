@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/server/db";
 import { bad, fail } from "@/lib/server/http";
+import { logActivity } from "@/lib/server/activity";
 import { ALLOWED_EXTENSIONS, MAX_FILE_BYTES, extOf } from "@/lib/file-rules";
 
 export const dynamic = "force-dynamic";
-export const BATCH_LIMIT = 10; // Cody: max 10 documents per batch
+const BATCH_LIMIT = 10; // Cody: max 10 documents per batch
 
 type Item = { client_id: string; file_name: string; file_size: number; content_type: string; folder_id: string; folder_name: string };
 
@@ -29,6 +30,11 @@ export async function POST(req: NextRequest) {
         returning id`;
       logs.push({ client_id: it.client_id, log_id: row.id });
     }
+    await logActivity({
+      action: "batch_created",
+      batch_id: batch.id,
+      detail: { items: items.length, files: items.map((i) => `${i.file_name} → ${i.folder_name}`) },
+    });
     return NextResponse.json({ batch_id: batch.id, logs });
   } catch (e) {
     return fail(e);

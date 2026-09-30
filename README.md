@@ -14,6 +14,16 @@ Next.js 16 + React 19 + TypeScript app that uploads documents into GRID Property
 | 7 | Everything waits in a queue until you press **Start sending** | `components/UploadTab.tsx` |
 | 8 | Documents in ticked folders with upload dates + status | `components/DocumentsTab.tsx` |
 | 9 | Preview before upload (PDF, TXT/MD, RTF, DOCX/DOCM, PPTX/PPTM text) | `components/FilePreview.tsx` |
+| 10 | Access-code modal on every load (default **412099**, override with `APP_PASSWORD`); API locked server-side | `components/PasswordGate.tsx`, `proxy.ts`, `lib/auth.ts` |
+| 11 | Queue + files survive refresh (IndexedDB in this browser) | `lib/idb.ts`, `hooks/useUploadQueue.ts` |
+| 12 | Kanban board `/board`: Inbox → Queued → Uploading → Converting → Learning → Learned / Needs attention, live (5 s) | `components/KanbanBoard.tsx` |
+| 13 | Activity log of every action (Neon `activity_log`) + live feed | `lib/server/activity.ts`, `app/api/activity`, `components/ActivityFeed.tsx` |
+| 14 | Create folders, delete documents from folders (with confirm) | `app/api/cody/folders`, `app/api/cody/documents/[id]` |
+| 15 | Dashboard `/dashboard`: totals, success rate, uploads per day, uploads by folder, file types, live activity (7/30/90 days/all) | `components/Dashboard.tsx`, `app/api/stats` |
+
+Old URLs `/login` and `/brand` redirect to `/`; unknown URLs send you to the dashboard.
+
+Access code note: the hardcoded default lives in `lib/auth.ts`. It's a shared code, not user accounts — set a stronger `APP_PASSWORD` in Netlify before sharing the URL widely.
 
 ## Run locally
 ```powershell

@@ -1,30 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_COOKIE, sessionToken } from "@/lib/auth";
+import { AUTH_COOKIE, accessCode, sessionToken } from "@/lib/auth";
 
 /**
- * Password gate. The deployed site can upload to Cody with your API key,
- * so it must not be open to the public.
- * - APP_PASSWORD set   -> login required.
- * - APP_PASSWORD unset -> open in local dev only; blocked in production.
+ * Server-side guard for every API route. The page itself shows a password modal on
+ * every load (components/PasswordGate.tsx); unlocking it sets this cookie, so the
+ * Cody key and database can't be used by anyone who hasn't entered the code.
  */
 export async function proxy(req: NextRequest) {
-  const pw = process.env.APP_PASSWORD;
-  if (!pw) {
-    if (process.env.NODE_ENV !== "production") return NextResponse.next();
-    return new NextResponse("APP_PASSWORD is not configured on the server.", { status: 503 });
-  }
   const cookie = req.cookies.get(AUTH_COOKIE)?.value;
-  if (cookie && cookie === (await sessionToken(pw))) return NextResponse.next();
-
-  if (req.nextUrl.pathname.startsWith("/api/")) {
-    return NextResponse.json({ message: "Not signed in." }, { status: 401 });
-  }
-  const url = req.nextUrl.clone();
-  url.pathname = "/login";
-  url.search = "";
-  return NextResponse.redirect(url);
+  if (cookie && cookie === (await sessionToken(accessCode()))) return NextResponse.next();
+  return NextResponse.json({ message: "Locked. Enter the access code." }, { status: 401 });
 }
 
 export const config = {
-  matcher: ["/((?!login|api/login|_next/|brand/|icon.png|favicon.ico).*)"],
+  matcher: ["/api/((?!login).*)"],
 };

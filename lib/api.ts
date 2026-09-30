@@ -8,7 +8,7 @@ async function json<T>(r: Response): Promise<T> {
     const err = new Error(body?.message ?? `Request failed (${r.status})`) as Error & { status?: number; retryAfter?: number };
     err.status = r.status;
     err.retryAfter = Number(r.headers.get("retry-after")) || body?.retry_after;
-    if (r.status === 401) window.location.href = "/login";
+    if (r.status === 401) window.dispatchEvent(new Event("grid:locked"));
     throw err;
   }
   return body as T;
@@ -29,7 +29,65 @@ export const getDocuments =(folderIds: string[]) =>
     .then((r) => json<{ data: CodyDocument[] }>(r))
     .then((d) => d.data);
 
-export const getHistory = (limit = 300) =>
+export const deleteDocument = (id: string, folderName?: string) =>
+  fetch(`/api/cody/documents/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folder_name: folderName }),
+  }).then((r) => json(r));
+
+export type Stats = {
+  days: number;
+  totals: {
+    uploads: number;
+    learned: number;
+    failed: number;
+    in_progress: number;
+    deleted: number;
+    bytes_learned: string | number;
+    folders: number;
+    batches: number;
+    avg_learn_seconds: number | null;
+    last_upload: string | null;
+  };
+  folders: {
+    folder_id: string;
+    folder_name: string | null;
+    uploads: number;
+    learned: number;
+    failed: number;
+    in_progress: number;
+    deleted: number;
+    bytes: string | number;
+    last_upload: string;
+  }[];
+  daily: { day: string; uploads: number; learned: number; failed: number }[];
+  types: { ext: string; uploads: number }[];
+};
+
+export const getStats = (days: number) => fetch(`/api/stats?days=${days}`).then((r) => json<Stats>(r));
+
+export type Activity = {
+  id: number;
+  created_at: string;
+  action: string;
+  source: "server" | "client";
+  file_name: string | null;
+  folder_id: string | null;
+  folder_name: string | null;
+  batch_id: string | null;
+  detail: Record<string, unknown> | null;
+};
+
+export const getActivity = (after = 0, limit = 100) =>
+  fetch(`/api/activity?after=${after}&limit=${limit}`).then((r) => json<{ data: Activity[] }>(r)).then((d) => d.data);
+
+/** Fire-and-forget audit event from the browser. */
+export function logClient(action: string, fields: { file_name?: string; folder_id?: string; folder_name?: string; detail?: Record<string, unknown> } = {}) {
+  void post("/api/activity", { action, ...fields }).catch(() => {});
+}
+
+export const getHistory =(limit = 300) =>
   fetch(`/api/history?limit=${limit}`).then((r) => json<{ data: (UploadLog & { batch_status: string })[] }>(r)).then((d) => d.data);
 
 export const getBatch = (id: string) => fetch(`/api/batches/${id}`).then((r) => json<{ batch: Batch; logs: UploadLog[] }>(r));

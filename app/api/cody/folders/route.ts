@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createFolder, listFolders } from "@/lib/server/cody";
 import { bad, fail } from "@/lib/server/http";
+import { logActivity } from "@/lib/server/activity";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export async function POST(req: NextRequest) {
       return bad(`A folder named “${clean}” already exists.`, 409);
     }
     const folder = await createFolder(clean);
+    await logActivity({ action: "folder_created", folder_id: folder?.id, folder_name: clean });
     return NextResponse.json({ data: folder }, { status: 201 });
   } catch (e) {
     return fail(e);

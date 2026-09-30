@@ -6,6 +6,7 @@ import type { UploadLog } from "@/lib/types";
 import { getHistory } from "@/lib/api";
 import { formatBytes } from "@/lib/file-rules";
 import { StatusBadge } from "./StatusBadge";
+import { ActivityFeed } from "./ActivityFeed";
 
 const fmt = (iso: string | null) =>
   iso
@@ -41,6 +42,7 @@ export function HistoryTab({ selected, refreshKey }: { selected: Set<string>; re
   );
 
   return (
+    <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
     <section aria-labelledby="hist-h" className="rounded-card border border-line bg-surface shadow-card">
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
         <h2 id="hist-h" className="text-sm font-semibold">
@@ -87,7 +89,7 @@ export function HistoryTab({ selected, refreshKey }: { selected: Set<string>; re
                   </td>
                   <td className="px-4 py-2.5 text-muted">{r.folder_name ?? r.folder_id}</td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-muted">{formatBytes(Number(r.file_size))}</td>
-                  <td className="px-4 py-2.5"><StatusBadge status={r.status} /></td>
+                  <td className="px-4 py-2.5">{r.deleted_at ? <span className="text-xs font-medium text-danger">Deleted</span> : <StatusBadge status={r.status} />}</td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-muted">{fmt(r.learned_at)}</td>
                   <td className="px-4 py-2.5 font-mono text-xs text-muted">{r.batch_id.slice(0, 8)}</td>
                 </tr>
@@ -97,5 +99,7 @@ export function HistoryTab({ selected, refreshKey }: { selected: Set<string>; re
         </div>
       )}
     </section>
+    <ActivityFeed live />
+    </div>
   );
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownUp, FileText, RefreshCw, Search } from "lucide-react";
+import { ArrowDownUp, FileText, Loader2, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { CodyDocument, CodyFolder } from "@/lib/types";
-import { getDocuments } from "@/lib/api";
+import { deleteDocument, getDocuments } from "@/lib/api";
 import { formatDate } from "@/lib/file-rules";
 import { StatusBadge } from "./StatusBadge";
 
@@ -38,6 +38,21 @@ export function DocumentsTab({ folders, selected, refreshKey }: Props) {
   useEffect(() => {
     void load();
   }, [load, refreshKey]);
+
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const remove = async (d: CodyDocument) => {
+    const folder = nameOf.get(d.folder_id) ?? "this folder";
+    if (!window.confirm(`Delete “${d.name}” from ${folder}?\n\nCody will forget this document. This can't be undone.`)) return;
+    setDeleting(d.id);
+    try {
+      await deleteDocument(d.id, nameOf.get(d.folder_id));
+      setDocs((all) => all.filter((x) => x.id !== d.id));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   // Auto-refresh while Cody is still learning something
   const syncing = docs.some((d) => d.status === "syncing");
@@ -121,6 +136,7 @@ export function DocumentsTab({ folders, selected, refreshKey }: Props) {
                 <th scope="col" className="px-4 py-2 font-medium">Folder</th>
                 <th scope="col" className="px-4 py-2 font-medium">Uploaded</th>
                 <th scope="col" className="px-4 py-2 font-medium">Status</th>
+                <th scope="col" className="px-2 py-2"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -142,6 +158,18 @@ export function DocumentsTab({ folders, selected, refreshKey }: Props) {
                   <td className="whitespace-nowrap px-4 py-2.5 text-muted">{formatDate(d.created_at)}</td>
                   <td className="px-4 py-2.5">
                     <StatusBadge status={d.status} />
+                  </td>
+                  <td className="px-2 py-2.5 text-right">
+                    <button
+                      type="button"
+                      disabled={deleting === d.id}
+                      onClick={() => void remove(d)}
+                      className="rounded-control p-1.5 text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-50"
+                      aria-label={`Delete ${d.name} from Cody`}
+                      title="Delete from Cody"
+                    >
+                      {deleting === d.id ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Trash2 className="size-4" aria-hidden="true" />}
+                    </button>
                   </td>
                 </tr>
               ))}

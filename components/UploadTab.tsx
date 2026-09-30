@@ -1,15 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Eye, FileText, FolderOpen, Pause, Play, SkipForward, Trash2, UploadCloud, X } from "lucide-react";
+import { Eye, FileText, FolderOpen, Pause, Play, RotateCcw, SkipForward, Trash2, UploadCloud, X } from "lucide-react";
 import type { CodyFolder, QueueItem } from "@/lib/types";
 import { ACCEPT_ATTR, ALLOWED_EXTENSIONS, formatBytes, validateFile } from "@/lib/file-rules";
-import { BATCH_SIZE, useUploadQueue } from "@/hooks/useUploadQueue";
+import { BATCH_SIZE, type UploadQueue as Queue } from "@/hooks/useUploadQueue";
 import { FilePreview } from "./FilePreview";
 import { StatusBadge } from "./StatusBadge";
 
 type Staged = { id: string; file: File; error: string | null };
-type Queue = ReturnType<typeof useUploadQueue>;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -161,8 +160,10 @@ function QueuePanel({ queue, onPreview }: { queue: Queue; onPreview: (fileId: st
 
   // Group: sent batches (newest first), then planned batches of 10.
   const groups: { title: string; status?: string; list: QueueItem[] }[] = [];
-  [...batches].reverse().forEach((b) =>
-    groups.push({ title: `Batch ${b.no}`, status: b.status, list: items.filter((x) => x.batchNo === b.no) }),
+  [...batches].reverse().forEach((b) => {
+    const list = items.filter((x) => x.batchNo === b.no);
+    if (list.length) groups.push({ title: `Batch ${b.no}`, status: b.status, list });
+  }
   );
   for (let i = 0; i < nextBatches; i++) {
     groups.push({
@@ -212,6 +213,16 @@ function QueuePanel({ queue, onPreview }: { queue: Queue; onPreview: (fileId: st
         </div>
       </div>
 
+      {queue.resumeNeeded && !running && (
+        <p className="border-b border-line bg-nile-soft px-4 py-2 text-xs text-nile" role="status">
+          The page was refreshed while the queue was running. Your cards were kept — press <strong>Start sending</strong> to resume.
+        </p>
+      )}
+      {items.some((x) => x.status === "unassigned") && (
+        <p className="border-b border-line px-4 py-2 text-xs text-muted">
+          {items.filter((x) => x.status === "unassigned").length} file(s) have no folder yet — assign them on the Board.
+        </p>
+      )}
       {notice && (
         <p className="border-b border-line bg-warning-soft px-4 py-2 text-xs text-warning" role="status" aria-live="polite">
           {notice}
@@ -248,7 +259,12 @@ function QueuePanel({ queue, onPreview }: { queue: Queue; onPreview: (fileId: st
                   <button type="button" onClick={() => onPreview(it.fileId)} className="rounded-control p-1 text-muted hover:bg-canvas hover:text-text" aria-label={`Preview ${it.fileName}`}>
                     <Eye className="size-4" aria-hidden="true" />
                   </button>
-                  {!it.logId && (
+                  {(it.status === "error" || it.status === "timeout" || it.status === "sync_failed") && (
+                    <button type="button" onClick={() => queue.retry(it.id)} className="rounded-control p-1 text-muted hover:bg-canvas hover:text-text" aria-label={`Retry ${it.fileName}`}>
+                      <RotateCcw className="size-4" aria-hidden="true" />
+                    </button>
+                  )}
+                  {(!it.logId || ["synced", "sync_failed", "error", "timeout"].includes(it.status)) && (
                     <button type="button" onClick={() => queue.remove(it.id)} className="rounded-control p-1 text-muted hover:bg-canvas hover:text-text" aria-label={`Remove ${it.fileName} from queue`}>
                       <X className="size-4" aria-hidden="true" />
                     </button>

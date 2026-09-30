@@ -44,6 +44,7 @@ export type UploadLog = {
   error: string | null;
   sent_at: string | null;
   learned_at: string | null;
+  deleted_at?: string | null;
 };
 
 export type Batch = {
@@ -54,16 +55,19 @@ export type Batch = {
   completed_at: string | null;
 };
 
-/** Client-side queue item: one file going to one folder. */
+/** Client-side queue item: one file going to one folder ("unassigned" = no folder chosen yet). */
+export type QueueStatus = LogStatus | "unassigned";
+
 export type QueueItem = {
   id: string; // client id
-  fileId: string; // staged file it came from
+  fileId: string; // file in IndexedDB it came from
   fileName: string;
   size: number;
   contentType: string;
-  folderId: string;
+  folderId: string; // "" while unassigned
   folderName: string;
-  status: LogStatus;
+  addedAt: number;
+  status: QueueStatus;
   progress: number;
   logId?: string;
   batchNo?: number;

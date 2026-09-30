@@ -32,3 +32,20 @@ create index if not exists upload_logs_batch_idx   on upload_logs (batch_id);
 create index if not exists upload_logs_created_idx on upload_logs (created_at desc);
 create index if not exists upload_logs_folder_idx  on upload_logs (folder_id);
 create unique index if not exists upload_logs_doc_uidx on upload_logs (cody_document_id) where cody_document_id is not null;
+
+alter table upload_logs add column if not exists deleted_at timestamptz;
+
+-- Audit trail of every action (server + client). Append-only.
+create table if not exists activity_log (
+  id             bigserial primary key,
+  created_at     timestamptz not null default now(),
+  action         text not null,       -- e.g. unlock, folder_created, upload_sent, document_learned, document_deleted
+  source         text not null default 'server',  -- server | client
+  file_name      text,
+  folder_id      text,
+  folder_name    text,
+  upload_log_id  uuid,
+  batch_id       uuid,
+  detail         jsonb
+);
+create index if not exists activity_log_created_idx on activity_log (created_at desc);
