@@ -21,7 +21,10 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const getFolders = () => fetch("/api/cody/folders").then((r) => json<{ data: CodyFolder[] }>(r)).then((d) => d.data);
 
-export const getDocuments = (folderIds: string[]) =>
+export const createFolder = (name: string) =>
+  post("/api/cody/folders", { name }).then((r) => json<{ data: CodyFolder }>(r)).then((d) => d.data);
+
+export const getDocuments =(folderIds: string[]) =>
   fetch(`/api/cody/documents?folder_ids=${encodeURIComponent(folderIds.join(","))}`)
     .then((r) => json<{ data: CodyDocument[] }>(r))
     .then((d) => d.data);

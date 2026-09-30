@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CodyFolder } from "@/lib/types";
-import { getFolders } from "@/lib/api";
+import { createFolder, getFolders } from "@/lib/api";
 import { useUploadQueue } from "@/hooks/useUploadQueue";
 import { FolderPicker } from "./FolderPicker";
 import { DocumentsTab } from "./DocumentsTab";
@@ -70,7 +70,19 @@ export function UploaderApp() {
   return (
     <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <FolderPicker folders={folders} loading={loading} error={error} selected={validSelected} onChange={choose} onReload={load} />
+        <FolderPicker
+          folders={folders}
+          loading={loading}
+          error={error}
+          selected={validSelected}
+          onChange={choose}
+          onReload={load}
+          onCreate={async (name) => {
+            const f = await createFolder(name);
+            setFolders((all) => [...all, f].sort((a, b) => a.name.localeCompare(b.name)));
+            choose(new Set([...validSelected, f.id])); // tick the new folder
+          }}
+        />
       </aside>
 
       <div className="min-w-0 space-y-5">

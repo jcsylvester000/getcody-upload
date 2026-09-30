@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RefreshCw, Search } from "lucide-react";
+import { FolderPlus, RefreshCw, Search } from "lucide-react";
 import type { CodyFolder } from "@/lib/types";
 
 type Props = {
@@ -11,11 +11,32 @@ type Props = {
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
   onReload: () => void;
+  onCreate: (name: string) => Promise<void>;
 };
 
 /** Tick-box filter of every Cody folder the API key can see. */
-export function FolderPicker({ folders, loading, error, selected, onChange, onReload }: Props) {
+export function FolderPicker({ folders, loading, error, selected, onChange, onReload, onCreate }: Props) {
   const [q, setQ] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [createErr, setCreateErr] = useState<string | null>(null);
+
+  const submitNew = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    setSaving(true);
+    setCreateErr(null);
+    try {
+      await onCreate(newName.trim());
+      setNewName("");
+      setAdding(false);
+    } catch (err) {
+      setCreateErr((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
   const shown = useMemo(() => {
     const k = q.trim().toLowerCase();
     return folders.filter((f) => f.name.toLowerCase().includes(k));
@@ -35,15 +56,55 @@ export function FolderPicker({ folders, loading, error, selected, onChange, onRe
           <h2 id="folders-h" className="text-xs font-semibold uppercase tracking-[0.12em] text-muesli-text">
             Cody folders
           </h2>
-          <button
-            type="button"
-            onClick={onReload}
-            className="rounded-control p-1 text-muted hover:bg-canvas hover:text-text"
-            aria-label="Reload folders"
-          >
-            <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
-          </button>
+          <span className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAdding((v) => !v);
+                setCreateErr(null);
+              }}
+              className="inline-flex items-center gap-1 rounded-control px-2 py-1 text-xs font-semibold text-nile hover:bg-nile-soft"
+              aria-expanded={adding}
+            >
+              <FolderPlus className="size-4" aria-hidden="true" /> New
+            </button>
+            <button
+              type="button"
+              onClick={onReload}
+              className="rounded-control p-1 text-muted hover:bg-canvas hover:text-text"
+              aria-label="Reload folders"
+            >
+              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} aria-hidden="true" />
+            </button>
+          </span>
         </div>
+        {adding && (
+          <form onSubmit={submitNew} className="mt-3 space-y-2 rounded-control border border-line bg-canvas p-3">
+            <label htmlFor="new-folder" className="block text-xs font-medium">New Cody folder name</label>
+            <input
+              id="new-folder"
+              autoFocus
+              maxLength={100}
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="e.g. Q4 Market Reports"
+              className="w-full rounded-control border border-line-strong bg-surface px-3 py-2 text-sm"
+            />
+            {createErr && <p className="text-xs text-danger" role="alert">{createErr}</p>}
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={saving || !newName.trim()}
+                className="rounded-control bg-nile px-3 py-1.5 text-xs font-semibold text-white hover:bg-midnight disabled:bg-iron disabled:text-muted"
+              >
+                {saving ? "Creating…" : "Create folder"}
+              </button>
+              <button type="button" onClick={() => setAdding(false)} className="rounded-control px-3 py-1.5 text-xs text-muted hover:bg-surface">
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
         <label className="relative mt-3 block">
           <span className="sr-only">Search folders</span>
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
