@@ -21,6 +21,8 @@ Next.js 16 + React 19 + TypeScript app that uploads documents into GRID Property
 | 14 | Create folders, delete documents from folders (with confirm) | `app/api/cody/folders`, `app/api/cody/documents/[id]` |
 | 15 | Dashboard `/dashboard`: totals, success rate, uploads per day, uploads by folder, file types, live activity (7/30/90 days/all) | `components/Dashboard.tsx`, `app/api/stats` |
 
+| 16 | Bots canvas `/bots`: bots (ID, model) + folders with files on a pan/zoom canvas; Create bot opens Cody and auto-detects the new bot. Read-only for bot↔folder access (Cody API v1 has no endpoint for it) | `components/BotCanvas.tsx`, `app/api/cody/bots` |
+
 Old URLs `/login` and `/brand` redirect to `/`; unknown URLs send you to the dashboard.
 
 Access code note: the hardcoded default lives in `lib/auth.ts`. It's a shared code, not user accounts — set a stronger `APP_PASSWORD` in Netlify before sharing the URL widely.

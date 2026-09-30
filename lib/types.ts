@@ -2,6 +2,8 @@
 
 export type CodyFolder = { id: string; name: string; created_at: number };
 
+export type CodyBot = { id: string; name: string; model?: string; created_at: number };
+
 export type CodyDocumentStatus = "syncing" | "synced" | "sync_failed";
 
 export type CodyDocument = {

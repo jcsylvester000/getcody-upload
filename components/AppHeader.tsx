@@ -9,6 +9,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/", label: "Uploader" },
   { href: "/board", label: "Board" },
+  { href: "/bots", label: "Bots" },
 ];
 
 export function AppHeader() {

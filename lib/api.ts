@@ -1,6 +1,6 @@
 "use client";
 // Browser-side calls to OUR API routes. The Cody key never reaches the browser.
-import type { Batch, CodyDocument, CodyFolder, UploadLog } from "./types";
+import type { Batch, CodyBot, CodyDocument, CodyFolder, UploadLog } from "./types";
 
 async function json<T>(r: Response): Promise<T> {
   const body = await r.json().catch(() => null);
@@ -21,7 +21,9 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const getFolders = () => fetch("/api/cody/folders").then((r) => json<{ data: CodyFolder[] }>(r)).then((d) => d.data);
 
-export const createFolder = (name: string) =>
+export const getBots = () => fetch("/api/cody/bots").then((r) => json<{ data: CodyBot[] }>(r)).then((d) => d.data);
+
+export const createFolder =(name: string) =>
   post("/api/cody/folders", { name }).then((r) => json<{ data: CodyFolder }>(r)).then((d) => d.data);
 
 export const getDocuments =(folderIds: string[]) =>

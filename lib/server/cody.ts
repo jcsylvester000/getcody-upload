@@ -1,5 +1,5 @@
 import "server-only";
-import type { CodyDocument, CodyFolder } from "@/lib/types";
+import type { CodyBot, CodyDocument, CodyFolder } from "@/lib/types";
 
 const BASE = process.env.CODY_API_BASE ?? "https://getcody.ai/api/v1";
 
@@ -121,6 +121,9 @@ export async function debugPagination(path = "/folders") {
 }
 
 export const listFolders = () => all<CodyFolder>("/folders");
+
+/** Cody GET /bots — the only bot endpoint in API v1 (no create / folder-access endpoints). */
+export const listBots = () => all<CodyBot>("/bots");
 
 /** Cody POST /folders { name } → the new folder. */
 export async function createFolder(name: string) {
