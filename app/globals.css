@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+  GRID Property Ventures brand tokens — from "Brand Guide - GRID as of Jan 28" (sections 3.12, 3.13, 4.x).
+  Components use these names only. See BRAND_GUIDELINES.md.
+*/
+@theme {
+  /* Primary colors (3.12) */
+  --color-nile: #1c335e;        /* Nile Blue  · P 108-16 C — primary actions, headings */
+  --color-muesli: #be8562;      /* Muesli     · P 36-10 C  — accent (non-text / large text) */
+  --color-midnight: #0e192f;    /* Midnight   · 296 C      — header bar, dark surfaces */
+  /* Secondary colors (3.13) */
+  --color-deep-code: #141545;   /* Deep Code  · P 103-16 C */
+  --color-burly: #e2b985;       /* Burly Wood · 7508 C     — highlights on dark */
+  --color-iron: #d2d2d2;        /* Iron       · P 179-3 C  — borders, disabled */
+
+  /* Derived (accessibility) — not in the guide, tints/shades of brand colors */
+  --color-muesli-text: #8c5a3a; /* Muesli shade for text on white (≥4.5:1) */
+  --color-muesli-soft: #f7efe9;
+  --color-nile-soft: #e9edf5;   /* selected rows, hover fills */
+
+  /* Neutrals */
+  --color-canvas: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-line: #e4e6ea;
+  --color-line-strong: #d2d2d2; /* Iron */
+  --color-text: #0e192f;        /* Midnight */
+  --color-muted: #5a6478;
+
+  /* Status */
+  --color-success: #1d7a46;
+  --color-success-soft: #e8f5ee;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fbf3e4;
+  --color-danger: #b42a24;
+  --color-danger-soft: #fcebea;
+
+  /* Typography (4.2 / 4.3): Cantata One headings, Poppins body */
+  --font-display: "Cantata One", Georgia, serif;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --shadow-card: 0 1px 2px rgb(14 25 47 / 0.06), 0 1px 1px rgb(14 25 47 / 0.04);
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-nile);
+  outline-offset: 2px;
+}
+
+/* Gold wave accent line, echoing the logo mark */
+.brand-rule {
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-burly), var(--color-muesli));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,18 @@
+# Netlify auto-detects Next.js 16 and uses its OpenNext adapter (no plugin needed).
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Secrets are NOT stored here. Set them in Netlify → Site configuration → Environment variables:
+#   CODY_API_KEY, CODY_API_BASE, DATABASE_URL, APP_PASSWORD
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Robots-Tag = "noindex, nofollow"
